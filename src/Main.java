@@ -1,4 +1,6 @@
-import javax.sound.midi.SysexMessage;
+/*
+
+ */
 import java.io.*;
 import java.util.*;
 
@@ -46,15 +48,15 @@ public class Main {
         exists.clear();
         repeated.clear();
 
-        for(Map.Entry<Integer,String> entry : inputVhm.entrySet()) {
+        for(Map.Entry<Integer,String> entry : inputVhm.entrySet()) {    //Convert V hashmap to a Vector<String>
             inputVv.add(entry.getValue());
         }
 
-        for(Map.Entry<Integer,String> entry : inputThm.entrySet()) {
+        for(Map.Entry<Integer,String> entry : inputThm.entrySet()) {    //Converts T hashmap to a Vector<String>
             inputTv.add(entry.getValue());
         }
 
-        for(int i = 0; i < 5; i++) {
+        for(int i = 0; i < 5; i++) {                    //Reiterates to adjust for multiple removals during unreachableRemoval/recurseUnproductives process
             for(int j = 0; j < inputVv.size(); j++){    //Removes values in V where they dont exist in P
                 if(!inputPhm.containsKey(inputVv.get(j))){
                     inputVv.remove(inputVv.get(j));
@@ -75,11 +77,7 @@ public class Main {
             inputPhm.replace(inputVv.get(i), inputPhm.get(inputVv.get(i)).replaceAll(",", "\\|"));
         }
 
-        /*System.out.println("Your new NEW NEWP map is: ");
-        for(Map.Entry<String, String> me : inputPhm.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
+        //Here to the end of program calls for an OutputStream and prints out final product to a txt file
         System.out.println("\nProgram finished simplifying " + filename + ". A file named '" + filename.substring(0, filename.length()-4) + "Output.txt' was created with your results. Thank you!");
         File file = new File(filename.substring(0, filename.length()-4) + "Output.txt"); //Your file
         FileOutputStream fos = new FileOutputStream(file);
@@ -123,7 +121,7 @@ public class Main {
         }
     }
 
-    private static void removeOldVars(String start){
+    private static void removeOldVars(String start){        //Removes variables from non-terminals that are no longer in V
         String[] temp = inputPhm.get(start).split("\\|");
         for(int i = 0; i < temp.length; i++){
             for(int j = 0; j < temp[i].length(); j++){
@@ -145,7 +143,7 @@ public class Main {
 
     }
 
-    private static boolean checkRepeat(String checkRepeated){
+    private static boolean checkRepeat(String checkRepeated){       //Method used to check if a non-terminal was already called for during other method recursions
         for(int i = 0; i < repeated.size(); i++){
             if(Objects.equals(repeated.elementAt(i), checkRepeated)){
                 return true;
@@ -154,7 +152,7 @@ public class Main {
         return false;
     }
 
-    private static void recurseUnproductives(String recurseStartInput){
+    private static void recurseUnproductives(String recurseStartInput){     //Recursively removes unproductives from P
         String[] stringP;
         if(!exists.contains(recurseStartInput)) {
             exists.add(recurseStartInput);
@@ -180,13 +178,8 @@ public class Main {
         }
     }
 
-    private static void unreachableRemoval(){
-        /*System.out.println("These are the values that were hit: ");
-        for(Map.Entry<Integer, String> me : pHit.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
-
+    private static void unreachableRemoval(){       //Parses through established hashmaps and removes grammar from P that was never reached
+                                                    //Then removes that grammar from V.
         Map<Integer, String> pNotHit = new HashMap<Integer, String>(inputVhm);
         for(int i = 0; i < inputVhm.size(); i++){
             for(int j = 0; j < inputVhm.size(); j++){
@@ -195,12 +188,6 @@ public class Main {
                 }
             }
         }
-
-        /*System.out.println("These are the values that were never hit: ");
-        for(Map.Entry<Integer, String> me : pNotHit.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
 
         for(int i = 0; i < inputPhm.size()+10; i++){
             inputPhm.remove(pNotHit.get(i));
@@ -211,23 +198,10 @@ public class Main {
                 }
             }
         }
-
-        /*System.out.println("Your new V map is: ");
-        for(Map.Entry<Integer, String> me : inputVhm.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
-
-        /*System.out.println("Your new P map is: ");
-        for(Map.Entry<String, String> me : inputPhm.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
-
     }
 
 
-    private static void recUnreachables(String inputStartVar, int x){
+    private static void recUnreachables(String inputStartVar, int x){               //Marks Unreachable grammar from P and gets it ready for removal
         if(x >= inputPhm.get(inputStart).length()){
         }
         else {
@@ -283,22 +257,6 @@ public class Main {
                 }
             }
         }
-        /*System.out.println("This is V map: ");
-        for(Map.Entry<Integer, String> me : inputVhm.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
-
-
-        /*CODE FOR PLACING V INTO MAP*/
-
-
-        /*System.out.println("\nThis is T map: ");
-        for(Map.Entry<Integer, String> me : inputThm.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
-
         /*CODE FOR PLACING P INTO MAP*/
 
         inputP = inputP.replaceAll("\n"," ");
@@ -320,15 +278,7 @@ public class Main {
             }
             cnt++;
         }
-
-        /*System.out.println("\nThis is P map: ");
-        for(Map.Entry<String, String> me : inputPhm.entrySet()){
-            System.out.print(me.getKey() + ":");
-            System.out.println(me.getValue());
-        }*/
     }
-
-
 
     static void sorter(Scanner scanner){        //Scans the File named and cleans it up (Trims unneeded spaces, and unnecessary extra letters like P)
         try {
@@ -382,15 +332,9 @@ public class Main {
         inputV = inputV.replaceFirst("V:","");
         inputT = inputT.replaceFirst("T:","");
         inputStart = inputStart.replaceFirst("S:","");
-
-        /*System.out.println("This is the data in file cleaned up and stored in variables: ");
-        System.out.println(inputV);
-        System.out.println(inputT);
-        System.out.println(inputStart);
-        System.out.println(inputP);*/
     }
 
-    private static String convertStringArrayToString(String[] strArr, String delimiter){
+    private static String convertStringArrayToString(String[] strArr, String delimiter){        //Used to convert String Arrays to a single String
         StringBuilder sb = new StringBuilder();
         for (String str : strArr)
             sb.append(str).append(delimiter);
