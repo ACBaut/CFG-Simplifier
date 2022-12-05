@@ -8,6 +8,6 @@ B:: aCb
 B:: bD
 C:: abC
 C:: a
-C:: e
+C::
 D:: aDB
 E:: aC 

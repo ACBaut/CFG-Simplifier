@@ -1,5 +1,5 @@
-import java.io.File;
-import java.io.FileInputStream;
+import javax.sound.midi.SysexMessage;
+import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -8,59 +8,141 @@ public class Main {
     static String inputStart = "";
     static String tempInputP = "";
     static String inputP = "";
+    static String filename;
+
+    static String[] inputVSplit;
+    static String[] inputTSplit;
+    static String[] inputPSplit;
+    String[] stringP;
+
     static int x = 0;
     static int cnt = 0;
+    static int pHitInt = 1;
+    static int repeat = 0;
+
     static Map<Integer, String> inputVhm = new HashMap<Integer, String>();
     static Map<Integer, String> inputThm = new HashMap<Integer, String>();
     static Map<String, String> inputPhm = new HashMap<String, String>();
     static Map<Integer, String> pHit = new HashMap<Integer, String>();
     static Map<Integer, String> checkRepeat = new HashMap<Integer, String>();
+
     static Vector<String> repeated = new Vector<String>();
     static Vector<String> exists = new Vector<String>();
+    static Vector<String> inputVv = new Vector<String>();
+    static Vector<String> inputTv = new Vector<String>();
 
-    static int pHitInt = 1;
-    static int repeat = 0;
-    static String[] inputVSplit;
-    static String[] inputTSplit;
-    static String[] inputPSplit;
-    //static char inputStartCharSavedFromPhm;
-    //static int intSavedFromPhm = 0;
     static char tempPhm;
-    String[] stringP;
-    static int testtest = 0;
 
-    public static void main(String[] args){
-        System.out.println("Enter txtfilename to simplify, without .txt");
+    public static void main(String[] args) throws FileNotFoundException {
+        System.out.println("Enter filename to simplify, with or without file extension");
         Scanner scanner = new Scanner(System.in);
-        //sorter(scanner);      //Remove when finished
-        sorter();                //Runs method to sort input from file to their own V, T, S, P variables
+        sorter(scanner);     //Runs method to sort input from file to their own V, T, S, P variables
         mapping();              //Runs method that takes variables made in sorter() and places them into their own has maps
         checkRepeat.put(0,"");  //Begins checkRepeat map as to not return null, forgot why I needed this
         pHit.put(0,inputStart); //
         recUnreachables(inputStart, 0);
         unreachableRemoval();
         recurseUnproductives(inputStart);
+        exists.clear();
+        repeated.clear();
 
+        for(Map.Entry<Integer,String> entry : inputVhm.entrySet()) {
+            inputVv.add(entry.getValue());
+        }
 
-        System.out.println("Your new NEW P map is: ");
+        for(Map.Entry<Integer,String> entry : inputThm.entrySet()) {
+            inputTv.add(entry.getValue());
+        }
+
+        for(int i = 0; i < 5; i++) {
+            for(int j = 0; j < inputVv.size(); j++){    //Removes values in V where they dont exist in P
+                if(!inputPhm.containsKey(inputVv.get(j))){
+                    inputVv.remove(inputVv.get(j));
+                }
+            }
+            removeOldVars(inputStart);
+            for(int j = 0; j < inputPhm.size(); j++){   //Replaced commas with | in P
+                inputPhm.replace(inputVv.get(j), inputPhm.get(inputVv.get(j)).replaceAll(",", "\\|"));
+            }
+            repeated.clear();
+            exists.clear();
+            recurseUnproductives(inputStart);
+            exists.clear();
+            repeated.clear();
+        }
+
+        for(int i = 0; i < inputPhm.size(); i++){   //Replaced commas with | in P
+            inputPhm.replace(inputVv.get(i), inputPhm.get(inputVv.get(i)).replaceAll(",", "\\|"));
+        }
+
+        /*System.out.println("Your new NEW NEWP map is: ");
         for(Map.Entry<String, String> me : inputPhm.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
+        }*/
+        System.out.println("\nProgram finished simplifying " + filename + ". A file named '" + filename.substring(0, filename.length()-4) + "Output.txt' was created with your results. Thank you!");
+        File file = new File(filename.substring(0, filename.length()-4) + "Output.txt"); //Your file
+        FileOutputStream fos = new FileOutputStream(file);
+        PrintStream ps = new PrintStream(fos);
+        System.setOut(ps);
+        System.out.print("V: ");
+        for(int i = 0; i < inputVv.size(); i++){
+            System.out.print(inputVv.get(i) + ", ");
         }
-
-
-
-
-        System.out.println("Program ended, thank you!");
+        for(int i = 0; i < inputTv.size(); i++){
+            if(i < inputTv.size() - 1) {
+                System.out.print(inputTv.get(i) + ", ");
+            }
+            else{
+                System.out.print(inputTv.get(i));
+            }
+        }
+        System.out.print("\nT: ");
+        for(int i = 0; i < inputTv.size(); i++){
+            if(i < inputTv.size() - 1) {
+                System.out.print(inputTv.get(i) + ", ");
+            }
+            else{
+                System.out.print(inputTv.get(i));
+            }
+        }
+        System.out.print("\nS: " + inputStart);
+        System.out.print("\nP:");
+        for(int i = 0; i < inputPhm.size(); i++){
+                int x = 0;
+                String[] temp = inputPhm.get(inputVv.get(i)).split("\\|");
+//                System.out.print("\n" + inputVv.get(i) + ":: ");
+                for(int j = 0; j < temp.length; j++){
+                    if(Objects.equals(temp[j], "")) {
+                    }
+                    else{
+                        System.out.print("\n" + inputVv.get(i) + ":: ");
+                        System.out.print(temp[j]);
+                    }
+                }
+        }
     }
 
     private static void removeOldVars(String start){
-        String[] temp = start.split("\\|");
+        String[] temp = inputPhm.get(start).split("\\|");
         for(int i = 0; i < temp.length; i++){
             for(int j = 0; j < temp[i].length(); j++){
+                if(inputVv.contains(Character.toString(temp[i].charAt(j))) && !checkRepeat(temp[i])){
+                    repeated.add(temp[i]);
+                    removeOldVars(Character.toString(temp[i].charAt(j)));
+                }
+                else if(inputTv.contains(Character.toString(temp[i].charAt(j))) || inputVv.contains(Character.toString(temp[i].charAt(j))) || temp[i].charAt(j) == ' '){
 
+                }
+
+                else{
+                    temp[i] = "";
+                    repeated.remove(temp[i]);
+                }
             }
         }
+    inputPhm.replace(start, convertStringArrayToString(temp, ","));
+
     }
 
     private static boolean checkRepeat(String checkRepeated){
@@ -84,7 +166,6 @@ public class Main {
             for(int j = 0; j < stringP[i].length(); j++){
                 if(inputPhm.containsKey(Character.toString(stringP[i].charAt(j)))){
                     if(!checkRepeat(stringP[i])) {
-                        //repeated.addAll(Arrays.asList(stringP));
                         repeated.add(stringP[i]);
                         recurseUnproductives(Character.toString(stringP[i].charAt(j)));
                     }
@@ -100,11 +181,11 @@ public class Main {
     }
 
     private static void unreachableRemoval(){
-        System.out.println("These are the values that were hit: ");
+        /*System.out.println("These are the values that were hit: ");
         for(Map.Entry<Integer, String> me : pHit.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
 
         Map<Integer, String> pNotHit = new HashMap<Integer, String>(inputVhm);
         for(int i = 0; i < inputVhm.size(); i++){
@@ -115,11 +196,11 @@ public class Main {
             }
         }
 
-        System.out.println("These are the values that were never hit: ");
+        /*System.out.println("These are the values that were never hit: ");
         for(Map.Entry<Integer, String> me : pNotHit.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
 
         for(int i = 0; i < inputPhm.size()+10; i++){
             inputPhm.remove(pNotHit.get(i));
@@ -131,17 +212,17 @@ public class Main {
             }
         }
 
-        System.out.println("Your new V map is: ");
+        /*System.out.println("Your new V map is: ");
         for(Map.Entry<Integer, String> me : inputVhm.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
 
-        System.out.println("Your new P map is: ");
+        /*System.out.println("Your new P map is: ");
         for(Map.Entry<String, String> me : inputPhm.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
 
     }
 
@@ -202,21 +283,21 @@ public class Main {
                 }
             }
         }
-        System.out.println("This is V map: ");
+        /*System.out.println("This is V map: ");
         for(Map.Entry<Integer, String> me : inputVhm.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
 
 
         /*CODE FOR PLACING V INTO MAP*/
 
 
-        System.out.println("\nThis is T map: ");
+        /*System.out.println("\nThis is T map: ");
         for(Map.Entry<Integer, String> me : inputThm.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
 
         /*CODE FOR PLACING P INTO MAP*/
 
@@ -227,7 +308,12 @@ public class Main {
             String[] temp = inputPSplit[cnt].split("::");
 
             if(inputPhm.containsKey(temp[0])){
-                inputPhm.put(temp[0], ((String)inputPhm.get(temp[0]) + "|" + temp[1]));
+                if(temp.length == 1){
+                    inputPhm.put(temp[0], ((String)inputPhm.get(temp[0]) + "|" + " "));
+                }
+                else {
+                    inputPhm.put(temp[0], ((String) inputPhm.get(temp[0]) + "|" + temp[1]));
+                }
             }
             else {
                 inputPhm.put(temp[0], temp[1]);
@@ -235,22 +321,26 @@ public class Main {
             cnt++;
         }
 
-        System.out.println("\nThis is P map: ");
+        /*System.out.println("\nThis is P map: ");
         for(Map.Entry<String, String> me : inputPhm.entrySet()){
             System.out.print(me.getKey() + ":");
             System.out.println(me.getValue());
-        }
+        }*/
     }
 
 
 
-    //static void sorter(Scanner scanner){        //Scans the File named and cleans it up (Trims unneeded spaces, and unnecessary extra letters like P)
-    static void sorter(){
+    static void sorter(Scanner scanner){        //Scans the File named and cleans it up (Trims unneeded spaces, and unnecessary extra letters like P)
         try {
-            //String temp = scanner.nextLine() + ".txt";    //Remove comment when finished with program
-            //File file = new File(temp);                   //Remove comment when finished with program
-            File file = new File("CFG-2022.txt");   //Remove Line when finished with program
-            //File file = new File("CFG-test2.txt");
+            String temp = scanner.nextLine();
+            if(temp.contains(".txt")){
+
+            }
+            else{
+                temp = temp + ".txt";
+            }
+            filename = temp;
+            File file = new File(temp);
             FileInputStream fileIn = new FileInputStream(file);
             while((x = fileIn.read()) != -1){
                 if(x != '\n') {
@@ -293,29 +383,17 @@ public class Main {
         inputT = inputT.replaceFirst("T:","");
         inputStart = inputStart.replaceFirst("S:","");
 
-        System.out.println("This is the data in file cleaned up and stored in variables: ");
+        /*System.out.println("This is the data in file cleaned up and stored in variables: ");
         System.out.println(inputV);
         System.out.println(inputT);
         System.out.println(inputStart);
-        System.out.println(inputP);
+        System.out.println(inputP);*/
+    }
+
+    private static String convertStringArrayToString(String[] strArr, String delimiter){
+        StringBuilder sb = new StringBuilder();
+        for (String str : strArr)
+            sb.append(str).append(delimiter);
+        return sb.substring(0, sb.length() - 1);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
