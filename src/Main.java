@@ -1,5 +1,5 @@
 /*
-
+    Created by: Abraham Bautista
  */
 import java.io.*;
 import java.util.*;
@@ -56,7 +56,7 @@ public class Main {
             inputTv.add(entry.getValue());
         }
 
-        for(int i = 0; i < 5; i++) {                    //Reiterates to adjust for multiple removals during unreachableRemoval/recurseUnproductives process
+        for(int i = 0; i < 2; i++) {                    //Reiterates to adjust for multiple removals during unreachableRemoval/recurseUnproductives process
             for(int j = 0; j < inputVv.size(); j++){    //Removes values in V where they dont exist in P
                 if(!inputPhm.containsKey(inputVv.get(j))){
                     inputVv.remove(inputVv.get(j));
@@ -64,7 +64,9 @@ public class Main {
             }
             removeOldVars(inputStart);
             for(int j = 0; j < inputPhm.size(); j++){   //Replaced commas with | in P
-                inputPhm.replace(inputVv.get(j), inputPhm.get(inputVv.get(j)).replaceAll(",", "\\|"));
+                if((inputVv.size() > 1 /*&& inputVv.get(j) != null */)|| Objects.equals(inputVv.get(j), ",")) {
+                    inputPhm.replace(inputVv.get(j), inputPhm.get(inputVv.get(j)).replaceAll(",", "\\|"));
+                }
             }
             repeated.clear();
             exists.clear();
@@ -73,9 +75,9 @@ public class Main {
             repeated.clear();
         }
 
-        for(int i = 0; i < inputPhm.size(); i++){   //Replaced commas with | in P
+        /*for(int i = 0; i < inputPhm.size(); i++){   //Replaced commas with | in P
             inputPhm.replace(inputVv.get(i), inputPhm.get(inputVv.get(i)).replaceAll(",", "\\|"));
-        }
+        }*/
 
         //Here to the end of program calls for an OutputStream and prints out final product to a txt file
         System.out.println("\nProgram finished simplifying " + filename + ". A file named '" + filename.substring(0, filename.length()-4) + "Output.txt' was created with your results. Thank you!");

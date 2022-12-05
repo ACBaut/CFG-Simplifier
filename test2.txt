@@ -1,0 +1,8 @@
+V: A, B, C, a, b
+T: a, b
+S: B
+P:
+A:: aB
+B:: Bb
+B:: aA
+C:: abB
